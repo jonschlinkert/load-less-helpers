@@ -1,59 +1,92 @@
 /*!
- * less-css-helpers <https://github.com/jonschlinkert/less-css-helpers>
+ * load-less-helpers <https://github.com/jonschlinkert/load-less-helpers>
  *
- * Copyright (c) 2015, Jon Schlinkert.
+ * Copyright (c) 2015-2017, Jon Schlinkert.
  * Licensed under the MIT License.
  */
 
 'use strict';
 
+var isObject = require('isobject');
 var extend = require('extend-shallow');
+var merge = require('mixin-deep');
 
-module.exports = function register(less, options) {
-  options = options || {};
-  less.helpers = less.functions.functionRegistry._data;
+function Register(less, options) {
+  if (!isObject(less) || typeof less.render !== 'function') {
+    throw new Error('expected an intance of less as the first argument');
+  }
+  if (!(this instanceof Register)) {
+    return new Register(less, options);
+  }
+
+  var opts = this.options = extend({}, options);
   var render = less.render;
-
-  less.render = function (str, opts, cb) {
-    extend(options, opts);
-    return render.call(less, str, opts, cb);
+  less.options = merge({}, less.options, opts);
+  less.helper = this.helper.bind(this);
+  less.helpers = this.helpers.bind(this);
+  less.render = function(str, options, cb) {
+    return render.call(less, str, merge({}, opts, options), cb);
   };
+  this.less = less;
+}
 
-  exports.helper = function(name, fn) {
-    if (typeof name !== 'string') {
-      throw new TypeError('less-helpers.helper expects `name` to be a string.');
+Register.prototype.helper = function(name, options, fn) {
+  if (typeof name !== 'string') {
+    throw new TypeError('expected name to be a string');
+  }
+
+  if (typeof options === 'function') {
+    return this.helper(name, fn, options);
+  }
+
+  if (typeof fn !== 'function') {
+    throw new TypeError('expected a helper function');
+  }
+
+  var key = name.toLowerCase();
+  var opts = extend({}, this.options, options);
+  var less = this.less;
+  var file = opts.file;
+  var data = opts.data;
+
+  delete opts.data;
+  delete opts.file;
+
+  if (opts.strict && less.helpers.hasOwnProperty(key.toLowerCase())) {
+    return this;
+  }
+
+  // Create the context for helper functions to use
+  function wrapped(node) {
+    this.less = less;
+
+    if (!('options' in this)) {
+      this.options = opts;
+    }
+    if (!('data' in this)) {
+      this.data = data || {};
+    }
+    if (!('file' in this)) {
+      this.file = file || less.file || {};
     }
 
-    var key = name.toLowerCase();
-    if (options.strict && less.helpers.hasOwnProperty(key.toLowerCase())) {
-      return;
-    }
+    var val = fn.call(this, node, less.file);
+    return !isObject(val) ? new less.tree.Anonymous(val) : val;
+  }
 
-    less.functions.functionRegistry.add(key, function () {
-      this.less = less;
-      if (!('options' in this)) {
-        this.options = options;
-      }
-      if (!('data' in this)) {
-        this.data = options.data || {};
-      }
-      if (!('file' in this)) {
-        this.file = options.file || {};
-      }
-      var res = fn.apply(this, arguments);
-      return typeof res !== "object"
-        ? new less.tree.Anonymous(res)
-        : res;
-    });
-  };
-
-  exports.helpers = function(helpers) {
-    if (typeof helpers !== 'object') {
-      throw new TypeError('less-helpers.helpers expects `helpers` to be an object.');
-    }
-    for (var name in helpers) {
-      exports.helper(name, helpers[name]);
-    }
-  };
-  return exports;
+  less.functions.functionRegistry.add(key, wrapped);
+  less.helpers[key] = wrapped;
+  return this;
 };
+
+Register.prototype.helpers = function(helpers, options) {
+  if (!isObject(helpers)) {
+    throw new TypeError('expected "helpers" to be an object');
+  }
+  for (var name in helpers) {
+    this.helper(name, options, helpers[name]);
+  }
+  return this;
+};
+
+module.exports = Register;
