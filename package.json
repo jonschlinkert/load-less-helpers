@@ -1,23 +1,14 @@
 {
-  "name": "less-css-helpers",
+  "name": "load-less-helpers",
   "description": "register helper functions that can be used with LESS, the same way that handlebars helpers are used in templates.",
   "version": "0.1.0",
-  "homepage": "https://github.com/jonschlinkert/less-css-helpers",
-  "author": {
-    "name": "Jon Schlinkert",
-    "url": "https://github.com/jonschlinkert"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jonschlinkert/less-css-helpers.git"
-  },
+  "homepage": "https://github.com/jonschlinkert/load-less-helpers",
+  "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
+  "repository": "jonschlinkert/load-less-helpers",
   "bugs": {
-    "url": "https://github.com/jonschlinkert/less-css-helpers/issues"
+    "url": "https://github.com/jonschlinkert/load-less-helpers/issues"
   },
-  "license": {
-    "type": "MIT",
-    "url": "https://github.com/jonschlinkert/less-css-helpers/blob/master/LICENSE"
-  },
+  "license": "MIT",
   "files": [
     "index.js"
   ],
@@ -29,11 +20,32 @@
     "test": "mocha"
   },
   "dependencies": {
-    "extend-shallow": "^1.1.4"
+    "extend-shallow": "^2.0.1",
+    "isobject": "^3.0.0",
+    "mixin-deep": "^1.1.3"
   },
   "devDependencies": {
-    "less": "^2.5.0",
-    "mocha": "*"
+    "gulp-format-md": "^0.1.11",
+    "less": "^2.7.2"
   },
-  "keywords": []
+  "keywords": [
+    "functions",
+    "helper",
+    "helpers",
+    "less",
+    "load"
+  ],
+  "verb": {
+    "toc": false,
+    "layout": "default",
+    "tasks": [
+      "readme"
+    ],
+    "plugins": [
+      "gulp-format-md"
+    ],
+    "lint": {
+      "reflinks": true
+    }
+  }
 }
